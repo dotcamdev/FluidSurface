@@ -619,7 +619,7 @@ FFluidSurfaceSceneProxy::~FFluidSurfaceSceneProxy( )
 }
 
 /** Returns the view revelance */
-FPrimitiveViewRelevance FFluidSurfaceSceneProxy::GetViewRelevance( const FSceneView* View )
+FPrimitiveViewRelevance FFluidSurfaceSceneProxy::GetViewRelevance( const FSceneView* View ) const
 {
 	FPrimitiveViewRelevance Result;
 	Result.bDrawRelevance = IsShown( View );

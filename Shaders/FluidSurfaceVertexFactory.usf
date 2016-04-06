@@ -7,14 +7,15 @@
 #include "VertexFactoryCommon.usf"
 #include "FluidSurfaceVertexFactoryCommon.usf"
 
+// Set by FLightMapTexturePolicy
+#include "UniformBuffers/PrecomputedLightingBuffer.usf"
+
 #if USE_FLUIDSURFACE
 Texture2D FluidTexture;
 SamplerState FluidTextureSampler;
 #endif
 
 float4x4 PreviousLocalToWorld;
-float4 LightMapCoordinateScaleBias;
-float4 ShadowMapCoordinateScaleBias;
 
 #if USE_INSTANCING
 float4 InstancingFadeOutParams;
@@ -173,7 +174,7 @@ float4 GetInstanceShadowMapBias(FVertexFactoryInput Input)
 #endif	// USE_INSTANCING
 
 /** Converts from vertex factory specific interpolants to a FMaterialPixelParameters, which is used by material inputs. */
-FMaterialPixelParameters GetMaterialPixelParameters(FVertexFactoryInterpolantsVSToPS Interpolants, float4 PixelPosition)
+FMaterialPixelParameters GetMaterialPixelParameters(FVertexFactoryInterpolantsVSToPS Interpolants, float4 SvPosition)
 {
 	// GetMaterialPixelParameters is responsible for fully initializing the result
 	FMaterialPixelParameters Result = MakeInitializedMaterialPixelParameters();
@@ -581,7 +582,7 @@ FVertexFactoryInterpolantsVSToPS VertexFactoryGetInterpolantsVSToPS(FVertexFacto
 #if NEEDS_LIGHTMAP_COORDINATE
 	#if USE_INSTANCING
 	//float2 InstanceLightMapBias = float2(Input.InstanceInverseTransform1.w, Input.InstanceInverseTransform2.w);
-	//Interpolants.LightMapCoordinate.xy = Input.LightMapCoordinate * LightMapCoordinateScaleBias.xy + InstanceLightMapBias;
+	//Interpolants.LightMapCoordinate.xy = Input.LightMapCoordinate * PrecomputedLightingBuffer.LightMapCoordinateScaleBias.xy + InstanceLightMapBias;
 		#if ES2_PROFILE
 	SetLightMapCoordinate(Interpolants, (float4)0, (float2)0);
 		#else
@@ -593,17 +594,17 @@ FVertexFactoryInterpolantsVSToPS VertexFactoryGetInterpolantsVSToPS(FVertexFacto
 	float2 ShadowMapCoordinate = 0;
 
 		#if ES2_PROFILE
-		LightMapCoordinate.xy = Input.LightMapCoordinate * LightMapCoordinateScaleBias.xy + LightMapCoordinateScaleBias.zw;
+		LightMapCoordinate.xy = Input.LightMapCoordinate * PrecomputedLightingBuffer.LightMapCoordinateScaleBias.xy + PrecomputedLightingBuffer.LightMapCoordinateScaleBias.zw;
 		LightMapCoordinate.y *= 0.5;
 		LightMapCoordinate.zw = LightMapCoordinate.xy;
 		LightMapCoordinate.w += 0.5;
 			#if STATICLIGHTING_TEXTUREMASK
-			ShadowMapCoordinate = Input.LightMapCoordinate * ShadowMapCoordinateScaleBias.xy + ShadowMapCoordinateScaleBias.zw;
+			ShadowMapCoordinate = Input.LightMapCoordinate * PrecomputedLightingBuffer.ShadowMapCoordinateScaleBias.xy + PrecomputedLightingBuffer.ShadowMapCoordinateScaleBias.zw;
 			#endif	// STATICLIGHTING_TEXTUREMASK
 		#else
-		LightMapCoordinate.xy = Input.LightMapCoordinate * LightMapCoordinateScaleBias.xy + LightMapCoordinateScaleBias.zw;
+		LightMapCoordinate.xy = Input.LightMapCoordinate * PrecomputedLightingBuffer.LightMapCoordinateScaleBias.xy + PrecomputedLightingBuffer.LightMapCoordinateScaleBias.zw;
 			#if STATICLIGHTING_TEXTUREMASK
-			ShadowMapCoordinate = Input.LightMapCoordinate * ShadowMapCoordinateScaleBias.xy + ShadowMapCoordinateScaleBias.zw;
+			ShadowMapCoordinate = Input.LightMapCoordinate * PrecomputedLightingBuffer.ShadowMapCoordinateScaleBias.xy + PrecomputedLightingBuffer.ShadowMapCoordinateScaleBias.zw;
 			#endif	// STATICLIGHTING_TEXTUREMASK
 		#endif	// ES2_PROFILE
 
@@ -717,7 +718,7 @@ float4 VertexFactoryGetPreviousWorldPosition(FVertexFactoryInput Input, FVertexF
 
 		Result.TangentToWorldPreScale = 1;
 
-		Result.WorldPosition = CameraLocalWorldPosition + View.ViewOrigin.xyz;
+		Result.WorldPosition = CameraLocalWorldPosition + ResolvedView.WorldCameraOrigin;
 
 		return Result;
 	}

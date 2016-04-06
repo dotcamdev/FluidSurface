@@ -145,7 +145,7 @@ public:
 	virtual ~FFluidSurfaceSceneProxy( );
 
 	/* Begin UPrimitiveSceneProxy interface */
-	virtual FPrimitiveViewRelevance GetViewRelevance( const FSceneView* View );
+	virtual FPrimitiveViewRelevance GetViewRelevance( const FSceneView* View ) const;
 	virtual bool CanBeOccluded( ) const override;
 	virtual uint32 GetMemoryFootprint( ) const;
 	uint32 GetAllocatedSize( ) const;
